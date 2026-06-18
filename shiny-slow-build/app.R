@@ -5,10 +5,10 @@ library(dplyr)
 library(randomForest)
 library(DT)
 
-# Heavy startup computation — intended to push build past 60s to generate
-# periodic usage-frame ticks in the vivid-blender pipeline.
+# Startup computation — takes ~20-25s on Connect Cloud, within the 60s
+# worker timeout. Periodic serve ticks fire every 60s while the app runs.
 set.seed(42)
-n <- 50000
+n <- 20000
 
 cat("Simulating dataset...\n")
 sim_data <- data.frame(
@@ -27,8 +27,8 @@ sim_data$y <- factor(ifelse(
   "A", "B"
 ))
 
-cat("Fitting random forest (500 trees)...\n")
-rf_model <- randomForest(y ~ ., data = sim_data, ntree = 500, importance = TRUE)
+cat("Fitting random forest (200 trees)...\n")
+rf_model <- randomForest(y ~ ., data = sim_data, ntree = 200, importance = TRUE)
 
 importance_df <- as.data.frame(importance(rf_model)) |>
   tibble::rownames_to_column("feature") |>
@@ -40,7 +40,7 @@ ui <- page_sidebar(
   title = "Slow-Build Shiny — RF Explorer",
   theme = bs_theme(bootswatch = "cosmo"),
   sidebar = sidebar(
-    sliderInput("ntree_disp", "Trees to display in OOB plot", 10, 500, 100, step = 10),
+    sliderInput("ntree_disp", "Trees to display in OOB plot", 10, 200, 100, step = 10),
     selectInput("feature_x", "X axis (scatter)", choices = names(sim_data)[1:8], selected = "x1"),
     selectInput("feature_y", "Y axis (scatter)", choices = names(sim_data)[1:8], selected = "x2"),
     numericInput("sample_n", "Scatter sample size", value = 500, min = 100, max = 5000, step = 100)
